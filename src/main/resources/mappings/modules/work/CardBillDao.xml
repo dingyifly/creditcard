@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dyf.creditcard.modules.work.dao.CardBillDao">
+    
+	<sql id="cardBillColumns">
+		a.id AS "id",
+		a.state AS "state",
+		a.month AS "month",
+		a.days AS "days",
+		a.amount AS "amount",
+		a.card_id AS "card.id",
+		b.no AS "card.no",
+		b.name AS "card.name",
+		b.phone AS "card.phone",
+		b.bank AS "card.bank",
+		b.sale_department AS "card.saleDepartment",
+		b.sale_manager AS "card.saleManager",
+		b.sale_director AS "card.saleDirector",
+		b.receiver AS "card.receiver",
+		b.accountant AS "card.accountant",
+		b.trade_pwd AS "card.tradePwd",
+		b.query_pwd AS "card.queryPwd",
+		b.loan_amount AS "card.loanAmount",
+		b.bill_date AS "card.billDate",
+		b.loan_date AS "card.loanDate",
+		b.solid_day AS "card.solidDay",
+		b.repayment_day AS "card.repaymentDay",
+		b.modify_date AS "card.modifyDate",
+		b.open_no AS "card.openNo",
+		b.card_attr AS "card.cardAttr",
+		b.lending_rates AS "card.lendingRates",
+		b.risk_control AS "card.riskControl",
+		b.card_source AS "card.cardSource",
+		b.effective_date AS "card.effectiveDate",
+		b.identifier AS "card.identifier",
+		b.payment_time AS "card.paymentTime",
+		b.card_quota AS "card.cardQuota",
+		b.receive_interest AS "card.receiveInterest",
+		b.paid_interest AS "card.paidInterest",
+		b.payment_way AS "card.paymentWay",
+		b.id_number AS "card.idNumber",
+		b.payment_detail AS "card.paymentDetail",
+		b.state AS "card.state",
+		b.remarks AS "card.remarks",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="cardBillJoins">
+		LEFT JOIN t_card b ON b.id = a.card_id
+	</sql>
+    
+	<select id="get" resultType="CardBill">
+		SELECT 
+			<include refid="cardBillColumns"/>
+		FROM t_card_bill a
+		<include refid="cardBillJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="CardBill">
+		SELECT 
+			<include refid="cardBillColumns"/>
+		FROM t_card_bill a
+		<include refid="cardBillJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			and b.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="card != null and card.id != null and card.id != ''">
+				AND a.card_id = #{card.id}
+			</if>
+			<if test="state != null and state != ''">
+				and a.state = #{state}
+			</if>
+			<if test="card != null and card.name != null and card.name != ''">
+				AND concat(ifnull(b.name, ''), ifnull(b.no, ''), ifnull(b.phone, ''), ifnull(b.sale_manager, ''), ifnull(b.sale_director, '')) LIKE 
+				<if test="dbName == 'oracle'">'%'||#{card.name}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{card.name}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{card.name},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="CardBill">
+		SELECT 
+			<include refid="cardBillColumns"/>
+		FROM t_card_bill a
+		<include refid="cardBillJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			and b.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO t_card_bill(
+			id,
+			state,
+			month,
+			days,
+			card_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{state},
+			#{month},
+			#{days},
+			#{card.id},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE t_card_bill SET 	
+			state = #{state},
+			month = #{month},
+			days = #{days},
+			amount = #{amount},
+			card_id = #{card.id},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE t_card_bill SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		<choose>
+			<when test="id !=null and id != ''">
+				WHERE id = #{id}
+			</when>
+			<otherwise>
+				WHERE card_id = #{card.id}
+			</otherwise>
+		</choose>
+	</update>
+	
+</mapper>

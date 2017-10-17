@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dyf.creditcard.modules.work.dao.CardDao">
+    
+	<sql id="cardColumns">
+		a.id AS "id",
+		a.no AS "no",
+		a.name AS "name",
+		a.phone AS "phone",
+		a.bank AS "bank",
+		a.sale_department AS "saleDepartment",
+		a.sale_manager AS "saleManager",
+		a.sale_director AS "saleDirector",
+		a.receiver AS "receiver",
+		a.accountant AS "accountant",
+		a.trade_pwd AS "tradePwd",
+		a.query_pwd AS "queryPwd",
+		a.loan_amount AS "loanAmount",
+		a.bill_date AS "billDate",
+		a.loan_date AS "loanDate",
+		a.solid_day AS "solidDay",
+		a.repayment_day AS "repaymentDay",
+		a.modify_date AS "modifyDate",
+		a.open_no AS "openNo",
+		a.card_attr AS "cardAttr",
+		a.lending_rates AS "lendingRates",
+		a.risk_control AS "riskControl",
+		a.card_source AS "cardSource",
+		a.effective_date AS "effectiveDate",
+		a.identifier AS "identifier",
+		a.payment_time AS "paymentTime",
+		a.card_quota AS "cardQuota",
+		a.receive_interest AS "receiveInterest",
+		a.paid_interest AS "paidInterest",
+		a.payment_way AS "paymentWay",
+		a.id_number AS "idNumber",
+		a.payment_detail AS "paymentDetail",
+		a.state AS "state",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="cardJoins">
+	</sql>
+    
+	<select id="get" resultType="Card">
+		SELECT 
+			<include refid="cardColumns"/>
+		FROM t_card a
+		<include refid="cardJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Card">
+		SELECT 
+			<include refid="cardColumns"/>
+		FROM t_card a
+		<include refid="cardJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND concat(ifnull(a.name, ''), ifnull(a.no, ''), ifnull(a.phone, ''), ifnull(a.sale_manager, ''), ifnull(a.sale_director, '')) LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="state != null and state != ''">
+				and a.state = #{state}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="checkSaleManager" resultType="Card">
+		SELECT 
+			<include refid="cardColumns"/>
+		FROM t_card a
+		<include refid="cardJoins"/>
+		WHERE a.sale_manager = #{saleManager}
+	</select>
+	
+	<select id="findExpireList" resultType="Card">
+		SELECT 
+			<include refid="cardColumns"/>
+		FROM t_card a
+		<include refid="cardJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND concat(ifnull(a.name, ''), ifnull(a.no, ''), ifnull(a.phone, ''), ifnull(a.sale_manager, ''), ifnull(a.sale_director, '')) LIKE
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<!-- <if test="effectiveDate != null and effectiveDate != ''"> -->
+				<!-- and effective_date <![CDATA[<=]]> curdate()  -->
+			<!-- </if> -->
+			and date_format(effective_date, '%Y-%m') = date_format(curdate(), '%Y-%m')
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.effective_date
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findUnAdviceList" resultType="Card">
+		SELECT 
+			<include refid="cardColumns"/>
+		FROM t_card a
+		<include refid="cardJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND concat(ifnull(a.name, ''), ifnull(a.no, ''), ifnull(a.phone, ''), ifnull(a.sale_manager, ''), ifnull(a.sale_director, '')) LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			and date_format(curdate(), '%d') > bill_date
+			and a.state = '2' 
+			and a.id not in (select card_id from t_card_bill where month = date_format(curdate(), '%Y-%m'))
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Card">
+		SELECT 
+			<include refid="cardColumns"/>
+		FROM t_card a
+		<include refid="cardJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO t_card(
+			id,
+			no,
+			name,
+			phone,
+			bank,
+			sale_department,
+			sale_manager,
+			sale_director,
+			receiver,
+			accountant,
+			trade_pwd,
+			query_pwd,
+			loan_amount,
+			bill_date,
+			loan_date,
+			solid_day,
+			repayment_day,
+			modify_date,
+			open_no,
+			card_attr,
+			lending_rates,
+			risk_control,
+			card_source,
+			effective_date,
+			identifier,
+			payment_time,
+			card_quota,
+			receive_interest,
+			paid_interest,
+			payment_way,
+			id_number,
+			payment_detail,
+			create_by,
+			state,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{no},
+			#{name},
+			#{phone},
+			#{bank},
+			#{saleDepartment},
+			#{saleManager},
+			#{saleDirector},
+			#{receiver},
+			#{accountant},
+			#{tradePwd},
+			#{queryPwd},
+			#{loanAmount},
+			#{billDate},
+			#{loanDate},
+			#{solidDay},
+			#{repaymentDay},
+			#{modifyDate},
+			#{openNo},
+			#{cardAttr},
+			#{lendingRates},
+			#{riskControl},
+			#{cardSource},
+			#{effectiveDate},
+			#{identifier},
+			#{paymentTime},
+			#{cardQuota},
+			#{receiveInterest},
+			#{paidInterest},
+			#{paymentWay},
+			#{idNumber},
+			#{paymentDetail},
+			#{createBy.id},
+			#{state},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE t_card SET 	
+			no = #{no},
+			name = #{name},
+			phone = #{phone},
+			bank = #{bank},
+			sale_department = #{saleDepartment},
+			sale_manager = #{saleManager},
+			sale_director = #{saleDirector},
+			receiver = #{receiver},
+			accountant = #{accountant},
+			trade_pwd = #{tradePwd},
+			query_pwd = #{queryPwd},
+			loan_amount = #{loanAmount},
+			bill_date = #{billDate},
+			loan_date = #{loanDate},
+			solid_day = #{solidDay},
+			repayment_day = #{repaymentDay},
+			modify_date = #{modifyDate},
+			open_no = #{openNo},
+			card_attr = #{cardAttr},
+			lending_rates = #{lendingRates},
+			risk_control = #{riskControl},
+			card_source = #{cardSource},
+			effective_date = #{effectiveDate},
+			identifier = #{identifier},
+			payment_time = #{paymentTime},
+			card_quota = #{cardQuota},
+			receive_interest = #{receiveInterest},
+			paid_interest = #{paidInterest},
+			payment_way = #{paymentWay},
+			id_number = #{idNumber},
+			payment_detail = #{paymentDetail},
+			state = #{state},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE t_card SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

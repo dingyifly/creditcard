@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dyf.creditcard.modules.work.dao.CardTransactionDao">
+    
+	<sql id="cardTransactionColumns">
+		a.id AS "id",
+		a.account AS "account",
+		a.state AS "state",
+		a.month AS "month",
+		a.bill_id AS "bill.id",
+		a.one_in AS "oneIn",
+		a.card_id AS "card.id",
+		a.one_out AS "oneOut",
+		a.cost_one AS "costOne",
+		a.deal_date AS "dealDate",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.two_in AS "twoIn",
+		a.two_out AS "twoOut",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.cost_two AS "costTwo",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		b.amount AS "bill.amount",
+		c.name AS "card.name",
+		c.no AS "card.no",
+		c.bill_date AS "card.billDate",
+		c.bank AS "card.bank",
+		c.trade_pwd AS "card.tradePwd",
+		c.sale_manager AS "card.saleManager",
+		c.repayment_day AS "card.repaymentDay"
+	</sql>
+	
+	<sql id="cardTransactionJoins">
+		LEFT JOIN t_card_bill b ON b.id = a.bill_id
+		LEFT JOIN t_card c on c.id = a.card_id
+	</sql>
+    
+	<select id="get" resultType="CardTransaction">
+		SELECT 
+			<include refid="cardTransactionColumns"/>
+		FROM t_card_transaction a
+		<include refid="cardTransactionJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="CardTransaction">
+		SELECT 
+			<include refid="cardTransactionColumns"/>
+		FROM t_card_transaction a
+		<include refid="cardTransactionJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			and c.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="state != null and state != ''">
+				and a.state = #{state}
+			</if>
+			<if test="bill != null and bill.id != null and bill.id != ''">
+				AND a.bill_id = #{bill.id}
+			</if>
+			<if test="card != null and card.name != null and card.name != ''">
+				AND concat(ifnull(c.name, ''), ifnull(c.no, ''), ifnull(c.phone, ''), ifnull(c.sale_manager, ''), ifnull(c.sale_director, '')) LIKE 
+				<if test="dbName == 'oracle'">'%'||#{card.name}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{card.name}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{card.name},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date ASC, c.id ASC, a.deal_date asc
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="CardTransaction">
+		SELECT 
+			<include refid="cardTransactionColumns"/>
+		FROM t_card_transaction a
+		<include refid="cardTransactionJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			and c.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findPendingList" resultType="CardTransaction">
+		SELECT 
+			<include refid="cardTransactionColumns"/>
+		FROM t_card_transaction a
+		<include refid="cardTransactionJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			and a.state = '0'
+			and a.deal_date = #{dealDate}
+			and c.del_flag = #{DEL_FLAG_NORMAL}
+			and c.state not in ('3','4')
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO t_card_transaction(
+			id,
+			account,
+			state,
+			month,
+			bill_id,
+			one_in,
+			card_id,
+			one_out,
+			cost_one,
+			deal_date,
+			create_by,
+			create_date,
+			two_in,
+			two_out,
+			update_by,
+			update_date,
+			cost_two,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{account},
+			#{state},
+			#{month},
+			#{bill.id},
+			#{oneIn},
+			#{card.id},
+			#{oneOut},
+			#{costOne},
+			#{dealDate},
+			#{createBy.id},
+			#{createDate},
+			#{twoIn},
+			#{twoOut},
+			#{updateBy.id},
+			#{updateDate},
+			#{costTwo},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE t_card_transaction SET 	
+			account = #{account},
+			state = #{state},
+			month = #{month},
+			bill_id = #{bill.id},
+			one_in = #{oneIn},
+			card_id = #{card.id},
+			one_out = #{oneOut},
+			cost_one = #{costOne},
+			two_in = #{twoIn},
+			two_out = #{twoOut},
+			deal_date = #{dealDate},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			cost_two = #{costTwo},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="changeStaet">
+		UPDATE t_card_transaction SET 	
+			state = #{state}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE t_card_transaction SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		<choose>
+			<when test="id !=null and id != ''">
+				WHERE id = #{id}
+			</when>
+			<otherwise>
+				WHERE bill_id = #{bill.id}
+			</otherwise>
+		</choose>
+	</update>
+	
+	<delete id="deleteTrue">
+		delete from t_card_transaction
+			where id = #{id}
+	</delete>
+	
+</mapper>

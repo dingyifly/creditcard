@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dyf.creditcard.modules.work.dao.CardInoperationDao">
+    
+	<sql id="cardInoperationColumns">
+		a.id AS "id",
+		a.limit_date AS "limitDate"
+	</sql>
+	
+	<sql id="cardInoperationJoins">
+	</sql>
+    
+	<select id="get" resultType="CardInoperation">
+		SELECT 
+			<include refid="cardInoperationColumns"/>
+		FROM t_card_inoperation a
+		<include refid="cardInoperationJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="CardInoperation">
+		SELECT 
+			<include refid="cardInoperationColumns"/>
+		FROM t_card_inoperation a
+		<include refid="cardInoperationJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="getLimitDateList" resultType="CardInoperation">
+		SELECT 
+			<include refid="cardInoperationColumns"/>
+		FROM t_card_inoperation a
+		<include refid="cardInoperationJoins"/>
+		<where>
+			a.limit_date > CURDATE()
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="CardInoperation">
+		SELECT 
+			<include refid="cardInoperationColumns"/>
+		FROM t_card_inoperation a
+		<include refid="cardInoperationJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO t_card_inoperation(
+			id,
+			limit_date
+		) VALUES (
+			#{id},
+			#{limitDate}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE t_card_inoperation SET 	
+			limit_date = #{limitDate}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM t_card_inoperation
+		WHERE id = #{id}
+	</update>
+	
+</mapper>
