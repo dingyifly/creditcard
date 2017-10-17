@@ -32,6 +32,7 @@
 						}
 						selectCheckNode();
 					},onDblClick: function(){//<c:if test="${!checked}">
+						console.log(top.$.jBox.getBox());
 						top.$.jBox.getBox().find("button[value='ok']").trigger("click");
 						//$("input[type='text']", top.mainFrame.document).focus();//</c:if>
 					}
